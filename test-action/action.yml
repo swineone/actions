@@ -1,0 +1,49 @@
+# In the steps, the serial and parallel code are run separately and their
+# stderr and stdout are saved to separate files. The stderr contains a
+# single line with the time (in seconds) and the stdout contains the program
+# output. The output is compared with `diff` and the speedup is calculated
+# with `bc`.
+name: 'Run tests'
+description: 'Execute serial and parallel to get speedup'
+inputs:
+  testname:  # path
+    description: 'The name of the test to execute'
+    required: true
+    default: '0'
+runs:
+  using: "composite"
+  steps:
+    - name: Run serial
+      shell: bash
+      run: |
+        build/serial tests/${{inputs.testname}}.in \
+            1>serial.${{inputs.testname}}.out \
+            2>serial.${{inputs.testname}}.time
+        cat serial.${{inputs.testname}}.out
+
+    - name: Run parallel
+      shell: bash
+      run: |
+        build/parallel tests/${{inputs.testname}}.in \
+            1>parallel.${{inputs.testname}}.out \
+            2>parallel.${{inputs.testname}}.time
+        cat parallel.${{inputs.testname}}.out
+
+    - name: Compare results
+      shell: bash
+      run: |
+        diff -u tests/${{inputs.testname}}.out parallel.${{inputs.testname}}.out
+
+    - name: Compute speedup
+      shell: bash
+      run: |
+        ser=$(<serial.${{inputs.testname}}.time)
+        par=$(<parallel.${{inputs.testname}}.time)
+        speedup=$(bc -l <<< "scale=4; $ser/$par")
+        echo "  Serial runtime: ${ser}s"
+        echo "Parallel runtime: ${par}s"
+        echo "         Speedup: ${speedup}x"
+        if [[ ! -f runtime.csv ]]; then
+          echo "# Input,Serial time,Parallel time,Speedup" > runtime.csv
+        fi
+        echo "${{inputs.testname}},$ser,$par,$speedup" >> runtime.csv

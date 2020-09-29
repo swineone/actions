@@ -1,0 +1,64 @@
+name: 'Tests T2'
+description: 'Execute tests for T1'
+inputs:
+  testname:  # path
+    description: 'The name of the test to execute'
+    required: true
+    default: '0'
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v2
+
+    # Build binaries
+    - name: Remove existing build environment
+      run: |
+        cmake -E remove -f build
+
+    - name: Create new build environment
+      run: |
+        cmake -E make_directory build
+
+    - name: Configure CMake
+      run: |
+        cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+    - name: Compile
+      run: |
+        cmake --build build
+
+    # Run the tests
+    - name: Run Test 1
+      uses: ./test-action
+      with:
+        testname: '1'
+    - name: Run Test 2
+      uses: ./test-action
+      with:
+        testname: '2'
+    - name: Run Test 3
+      uses: ./test-action
+      with:
+        testname: '3'
+    - name: Run Test 4
+      uses: ./test-action
+      with:
+        testname: '4'
+    - name: Run Test 5
+      uses: ./test-action
+      with:
+        testname: '5'
+
+    # Upload artifacts
+    - name: Upload output
+      uses: actions/upload-artifact@v2
+      with:
+        name: Outputs
+        path: |
+          parallel.?.out
+
+    - name: Upload CSV table
+      uses: actions/upload-artifact@v2
+      with:
+        name: Runtime
+        path: runtime.csv
