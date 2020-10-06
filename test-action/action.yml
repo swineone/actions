@@ -32,7 +32,7 @@ runs:
     - name: Compare results
       shell: bash
       run: |
-        diff -u tests/${{inputs.testname}}.out parallel.${{inputs.testname}}.out
+        diff -u serial.${{inputs.testname}}.out parallel.${{inputs.testname}}.out
 
     - name: Compute speedup
       shell: bash
